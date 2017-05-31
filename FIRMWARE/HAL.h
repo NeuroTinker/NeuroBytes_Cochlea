@@ -9,17 +9,37 @@
 #include <libopencm3/stm32/exti.h>
 #include <libopencm3/stm32/adc.h>
 
+#include "kiss_fft.h"
+
+#define NUM_BUCKETS     1024
+#define NYQUIST_F       NUM_BUCKETS / 2
+#define N               1024
+#define MAIN_TICK_TIME  5000 // 5 ms
+#define UPDATE_TIME     50000  // microseconds update time 50 Hz = 10 main ticks
+#define UPDATE_TICKS    = UPDATE_TIME / MAIN_TICK_TIME
+#define SAMPLE_TIME     100 // sample every 100 us, 10 kHz
+#define NUM_SAMPLES     UPDATE_TIME / SAMPLE_TIME
+
 #define PORT_MIC    GPIOA
-#define PIN_MIC     GPIO0
+#define PIN_MIC     GPIO1
+
+#define PORT_LED    GPIOD
+#define PIN_LED4    GPIO12
+#define PIN_LED2    GPIO14
+#define PIN_LED3    GPIO13
+#define PIN_LED1    GPIO15
 
 extern volatile uint8_t main_tick;
 extern volatile uint8_t tick;
+extern kiss_fft_cpx timedata[N]; // time domain samples
+extern volatile uint8_t data_ready_flag;
 
-void systick_setup(int xms);
+void systick_setup(int ums);
 void clock_setup(void);
 void gpio_setup(void);
 void tim_setup(void);
 void adc_setup(void);
+uint32_t read_adc(void);
 
 
 #endif
