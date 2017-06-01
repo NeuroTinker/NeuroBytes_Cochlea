@@ -40,7 +40,7 @@ void systick_setup(int ums)
 {
 	
     /* clock rate / 1000 to get 1mS interrupt rate */
-	systick_set_reload(10000);
+	systick_set_reload(50000);
 	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
 	systick_counter_enable();
 	/* this done last */

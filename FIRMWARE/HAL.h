@@ -13,7 +13,7 @@
 
 #define NUM_BUCKETS     1024
 #define NYQUIST_F       NUM_BUCKETS / 2
-#define N               1024
+#define N               2048
 #define MAIN_TICK_TIME  5000 // 5 ms
 #define UPDATE_TIME     50000  // microseconds update time 50 Hz = 10 main ticks
 #define UPDATE_TICKS    = UPDATE_TIME / MAIN_TICK_TIME

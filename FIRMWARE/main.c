@@ -1,5 +1,5 @@
 #include <math.h>
-#define FIXED_POINT 32
+//#define FIXED_POINT 32
 
 #define NUM_OUTPUTS 4
 
@@ -61,13 +61,13 @@ int main()
                     }
                     */
 
-                    if (largest_bucket < 120){
+                    if (largest_bucket < 200){
                         gpio_set(PORT_LED, PIN_LED1);
-                    } else if (largest_bucket < 140){
+                    } else if (largest_bucket < 600){
                         gpio_set(PORT_LED, PIN_LED2);
-                    } else if (largest_bucket < 160){
+                    } else if (largest_bucket < 1000){
                         gpio_set(PORT_LED, PIN_LED3);
-                    } else if (largest_bucket < 180){
+                    } else if (largest_bucket < 1400){
                         gpio_set(PORT_LED, PIN_LED4);
                     }
                 }
