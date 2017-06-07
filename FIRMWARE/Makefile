@@ -1,7 +1,7 @@
 
 BINARY = main
 
-OBJS = HAL.o kiss_fft.o
+OBJS = HAL.o kiss_fft.o mini-printf.o
 
 OPENCM3_DIR = ../libopencm3
 
