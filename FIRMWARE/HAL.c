@@ -22,13 +22,15 @@ void clock_setup(void)
 
 void sys_tick_handler(void)
 {
-    //gpio_toggle(GPIOA, GPIO3);
+    // 100 microseconds
+    uint32_t val = 0;
+    char strDisp[20];
     
     if (tick++ >= 1000){
         main_tick = 1;
         tick = 0;
     }
-   // while (!adc_eoc(ADC1));
+    gpio_toggle(GPIOA, GPIO3);
    channel_array[0] = 1;
     if (sample_count < NUM_SAMPLES && data_ready_flag == 0){
         
@@ -36,7 +38,12 @@ void sys_tick_handler(void)
 	    adc_start_conversion_regular(ADC1);
 	    while (!adc_eoc(ADC1));
         timedata[sample_count].r = adc_read_regular(ADC1);
-        
+        val = timedata[sample_count].r;
+        /*
+                            mini_snprintf(strDisp, 20, "%u",val);
+		            usart_print(strDisp);
+                    usart_send_blocking(USART2, '\n');
+        */    
         //timedata[sample_count].r = read_adc();
         sample_count += 1;
     } else if (sample_count >= NUM_SAMPLES && data_ready_flag ==0){
@@ -64,7 +71,7 @@ void systick_setup(int ums)
 {
 	
     /* clock rate / 1000 to get 1mS interrupt rate */
-	systick_set_reload(10000);
+	systick_set_reload(4000); // 10000 --> 50 us
 	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
 	systick_counter_enable();
 	/* this done last */

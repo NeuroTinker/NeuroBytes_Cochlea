@@ -14,7 +14,7 @@
 
 #define NUM_BUCKETS     1024
 #define NYQUIST_F       NUM_BUCKETS / 2
-#define N               2048
+#define N               1024
 #define MAIN_TICK_TIME  5000 // 5 ms
 #define UPDATE_TIME     50000  // microseconds update time 50 Hz = 10 main ticks
 #define UPDATE_TICKS    = UPDATE_TIME / MAIN_TICK_TIME
@@ -46,6 +46,7 @@ uint32_t read_adc(void);
 void usart_setup(void);
 void tim_setup(void);
 void setLED(uint32_t led1, uint32_t led2, uint32_t led3, uint32_t led4);
+void usart_print(char *msg);
 
 
 #endif
