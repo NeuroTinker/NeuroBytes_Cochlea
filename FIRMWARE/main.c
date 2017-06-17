@@ -14,6 +14,9 @@
 
 #define PRINT
 
+#define BUCKET_BEGIN 5
+#define BUCKET_END 45
+
 
 
 int main()
@@ -34,9 +37,8 @@ int main()
 	}
 	uint16_t val;
     uint32_t bucket[5] = {0,0,0,0,0};
-    uint16_t bucket_end[4] = {14, 24, 34, 44, 500};
+    uint16_t bucket_end[4] = {14, 24, 34, 44, 500}; // define buckets -> linked to LEDs
     uint16_t bucket_i = 0;
-    uint32_t smallest_bucket_i =0;
 
     kiss_fft_cpx freqdata[N]; // frequency domain samples
     // initialize FFT buffer
@@ -47,33 +49,21 @@ int main()
         if (main_tick == 1){
             main_tick = 0;
             if (data_ready_flag == 1){
-                
-                mini_snprintf(strDisp, 20, "%u", 111111);
-		            usart_print(strDisp);
-                    usart_send_blocking(USART2, '\n');
-                // debug send time data
-                /*
-                for(i=0; i<NUM_SAMPLES; i++){
-                val = timedata[i].r;
-                mini_snprintf(strDisp, 20, "%u", val);
-		        usart_print(strDisp);
-                usart_send_blocking(USART2, '\n');
-            }
-            */
+                // 2048 samples ready for FFT
                 kiss_fft(fft_buffer, timedata, freqdata); // FFT transform time domain -> frequency domain
                 data_ready_flag = 0;
                 for(i=0; i<5; i++){
                     bucket[i] = 0;
                 }
                 bucket_i = 0;
-                for(i=4; i<45; i++){
+                for(i=BUCKET_BEGIN; i<BUCKET_END; i++){
                     val = freqdata[i].r;
                     #ifdef PRINT
                     mini_snprintf(strDisp, 20, "%u", val);
 		            usart_print(strDisp);
                     usart_send_blocking(USART2, '\n');
                     #endif
-                    
+                    // perform bucketing
                     if (i<bucket_end[bucket_i]){
                         bucket[bucket_i] += val;
                     } else{
@@ -87,18 +77,6 @@ int main()
                     
                 }
             }
-            /*
-            smallest_bucket_i = 0;
-            for(i=0; i<4; i++){
-                if (bucket[i] < bucket[smallest_bucket_i]){
-                    smallest_bucket_i = i;
-                }
-            }
-            for(i=0; i<4; i++){
-                bucket[i] -= bucket[smallest_bucket_i];
-            
-            }
-            */
 
             setLED(bucket[0] / 5,bucket[1],bucket[2],bucket[3]);
         }

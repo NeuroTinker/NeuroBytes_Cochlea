@@ -31,20 +31,13 @@ void sys_tick_handler(void)
         tick = 0;
     }
     gpio_toggle(GPIOA, GPIO3);
-   channel_array[0] = 1;
+    channel_array[0] = 1;
     if (sample_count < NUM_SAMPLES && data_ready_flag == 0){
-        
         adc_set_regular_sequence(ADC1, 1, channel_array);
 	    adc_start_conversion_regular(ADC1);
 	    while (!adc_eoc(ADC1));
         timedata[sample_count].r = adc_read_regular(ADC1);
         val = timedata[sample_count].r;
-        /*
-                            mini_snprintf(strDisp, 20, "%u",val);
-		            usart_print(strDisp);
-                    usart_send_blocking(USART2, '\n');
-        */    
-        //timedata[sample_count].r = read_adc();
         sample_count += 1;
     } else if (sample_count >= NUM_SAMPLES && data_ready_flag ==0){
         sample_count = 0;
