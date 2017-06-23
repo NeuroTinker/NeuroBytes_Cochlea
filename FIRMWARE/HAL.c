@@ -2,7 +2,7 @@
 
 volatile uint16_t tick = 0;
 extern volatile uint8_t main_tick = 0;
-kiss_fft_cpx timedata[N];
+volatile float timedata[NUM_SAMPLES];
 volatile uint8_t data_ready_flag=0;
 uint32_t sample_count = 0;
 
@@ -23,22 +23,27 @@ void clock_setup(void)
 void sys_tick_handler(void)
 {
     // 100 microseconds
-    uint32_t val = 0;
-    char strDisp[20];
-    
-    if (tick++ >= 1000){
+    uint32_t val;
+    if (tick++ >= 100){
         main_tick = 1;
         tick = 0;
     }
-    gpio_toggle(GPIOA, GPIO3);
+    //gpio_toggle(GPIOA, GPIO3);
     channel_array[0] = 1;
     if (sample_count < NUM_SAMPLES && data_ready_flag == 0){
+        //gpio_set(GPIOA, GPIO3);
         adc_set_regular_sequence(ADC1, 1, channel_array);
 	    adc_start_conversion_regular(ADC1);
 	    while (!adc_eoc(ADC1));
-        timedata[sample_count].r = adc_read_regular(ADC1);
-        val = timedata[sample_count].r;
+        timedata[sample_count] = adc_read_regular(ADC1);
         sample_count += 1;
+        /*
+        if (val > 1000){
+            timedata[sample_count].r = (uint32_t)val;
+            sample_count += 1;
+        }
+        */
+        //gpio_clear(GPIOA, GPIO3);
     } else if (sample_count >= NUM_SAMPLES && data_ready_flag ==0){
         sample_count = 0;
         data_ready_flag = 1;
@@ -64,7 +69,7 @@ void systick_setup(int ums)
 {
 	
     /* clock rate / 1000 to get 1mS interrupt rate */
-	systick_set_reload(4000); // 10000 --> 50 us
+	systick_set_reload(10000); // 10000 --> 60 us 4000
 	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
 	systick_counter_enable();
 	/* this done last */

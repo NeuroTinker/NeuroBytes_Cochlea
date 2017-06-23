@@ -2,7 +2,7 @@
 //#define FIXED_POINT 32
 
 #define NUM_OUTPUTS 4
-
+//#define FIXED_POINT 32
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
@@ -10,12 +10,13 @@
 #include "mini-printf.h"
 
 #include "kiss_fft.h"
+#include "kiss_fftr.h"
 #include "HAL.h"
 
-#define PRINT
+//#define PRINT
 
-#define BUCKET_BEGIN 5
-#define BUCKET_END 45
+#define BUCKET_BEGIN 0
+#define BUCKET_END 500
 
 
 
@@ -35,14 +36,14 @@ int main()
 	{
 		strDisp[i] = 0;
 	}
-	uint16_t val;
+	uint32_t val;
     uint32_t bucket[5] = {0,0,0,0,0};
-    uint16_t bucket_end[4] = {14, 24, 34, 44, 500}; // define buckets -> linked to LEDs
+    uint16_t bucket_end[5] = {10, 20, 30, 40, NUM_BUCKETS - 1}; // define buckets -> linked to LEDs
     uint16_t bucket_i = 0;
 
-    kiss_fft_cpx freqdata[N]; // frequency domain samples
+    kiss_fft_cpx freqdata[NUM_SAMPLES]; // frequency domain samples
     // initialize FFT buffer
-    kiss_fft_cfg fft_buffer = kiss_fft_alloc(NUM_BUCKETS, 0, 0, 0);
+    kiss_fftr_cfg fft_buffer = kiss_fft_alloc(NUM_SAMPLES, 0, 0, 0);
 
     uint32_t output_bucket[4];
     for(;;){
@@ -50,19 +51,33 @@ int main()
             main_tick = 0;
             if (data_ready_flag == 1){
                 // 2048 samples ready for FFT
-                kiss_fft(fft_buffer, timedata, freqdata); // FFT transform time domain -> frequency domain
-                data_ready_flag = 0;
+                //gpio_set(GPIOA, GPIO3);
+                mini_snprintf(strDisp, 20, "%u", 111111);
+		        usart_print(strDisp);
+                usart_send_blocking(USART2, '\n');
+                
+                for (i=0; i< NUM_SAMPLES; i++){
+                    val = timedata[i];
+                    mini_snprintf(strDisp, 20, "%u", val);
+		            usart_print(strDisp);
+                    usart_send_blocking(USART2, '\n');
+                }
+                
+                
+                kiss_fftr(fft_buffer, timedata, freqdata); // FFT transform time domain -> frequency domain
                 for(i=0; i<5; i++){
                     bucket[i] = 0;
                 }
                 bucket_i = 0;
                 for(i=BUCKET_BEGIN; i<BUCKET_END; i++){
                     val = freqdata[i].r;
+                    
                     #ifdef PRINT
                     mini_snprintf(strDisp, 20, "%u", val);
 		            usart_print(strDisp);
                     usart_send_blocking(USART2, '\n');
                     #endif
+                    
                     // perform bucketing
                     if (i<bucket_end[bucket_i]){
                         bucket[bucket_i] += val;
@@ -74,11 +89,12 @@ int main()
                             break;
                         }
                     }
-                    
+                    //gpio_clear(GPIOA, GPIO3);
+                    data_ready_flag = 0;
                 }
             }
 
-            setLED(bucket[0] / 5,bucket[1],bucket[2],bucket[3]);
+            setLED(bucket[0],bucket[1],bucket[2],bucket[3]);
         }
     }
 }

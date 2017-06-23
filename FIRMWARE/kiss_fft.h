@@ -1,10 +1,9 @@
 #ifndef KISS_FFT_H
 #define KISS_FFT_H
 
-#include <math.h>
-
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 #ifdef __cplusplus
