@@ -1,5 +1,8 @@
 #ifndef HAL_H_
 #define HAL_H_
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
@@ -13,6 +16,7 @@
 
 #define NUM_BUCKETS     513 // try NUM_SAMPLES / 2 + 1
 #define NUM_SAMPLES     1024
+#define USART_CONSOLE USART2
 
 #define PORT_MIC    GPIOA
 #define PIN_MIC     GPIO1
@@ -25,21 +29,23 @@
 
 extern volatile uint8_t main_tick;
 extern volatile uint16_t tick;
-extern volatile kiss_fft_cpx timedata[NUM_SAMPLES]; // time domain samples
 extern volatile uint8_t data_ready_flag;
+
+extern kiss_fft_cpx timedata[1024];
+
 
 static const uint16_t gamma_lookup[1024];
 
 void systick_setup(int ums);
 void clock_setup(void);
-void gpio_setup(void);
 void tim_setup(void);
-void adc_setup(void);
-uint32_t read_adc(void);
 void usart_setup(void);
-void tim_setup(void);
+void gpio_setup(void);
+void adc_setup(void);
+uint16_t read_adc(uint8_t channel);
+int _write(int file, char *ptr, int len);
+
 void setLED(uint32_t led1, uint32_t led2, uint32_t led3, uint32_t led4);
-void usart_print(char *msg);
 
 
 #endif

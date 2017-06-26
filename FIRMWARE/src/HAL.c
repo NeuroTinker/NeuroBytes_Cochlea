@@ -2,40 +2,25 @@
 
 volatile uint16_t tick = 0;
 extern volatile uint8_t main_tick = 0;
-volatile kiss_fft_cpx timedata[NUM_SAMPLES];
 volatile uint8_t data_ready_flag=0;
 uint32_t sample_count = 0;
-
-uint8_t channel_array[16];
-
-void clock_setup(void)
-{
-	rcc_clock_setup_hse_3v3(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_168MHZ]);
-
-	/* Enable GPIOD clock. */
-    rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_GPIOG);
-    rcc_periph_clock_enable(RCC_ADC1);
-
-    rcc_periph_clock_enable(RCC_USART2);
-}
+kiss_fft_cpx timedata[1024];
 
 void sys_tick_handler(void)
 {
     // 100 microseconds
-    uint32_t val;
+    uint16_t val;
     if (tick++ >= 1000){
         main_tick = 1;
         tick = 0;
     }
     //gpio_toggle(GPIOA, GPIO3);
-    channel_array[0] = 1;
     if (sample_count < NUM_SAMPLES && data_ready_flag == 0){
         //gpio_set(GPIOA, GPIO3);
-        adc_set_regular_sequence(ADC1, 1, channel_array);
-	    adc_start_conversion_regular(ADC1);
-	    while (!adc_eoc(ADC1));
-        timedata[sample_count].r = adc_read_regular(ADC1);
+        val = read_adc(0);
+        timedata[sample_count].r = (double_t) val * 1.0;
+        timedata[sample_count].i = 0;
+        //printf("%f\n", timedata[sample_count].r);
         sample_count += 1;
         //gpio_clear(GPIOA, GPIO3);
     } else if (sample_count >= NUM_SAMPLES && data_ready_flag ==0){
@@ -45,19 +30,6 @@ void sys_tick_handler(void)
 
 }
 
-void usart_setup(void)
-{
-	/* Setup USART2 parameters. */
-	usart_set_baudrate(USART2, 115200);
-	usart_set_databits(USART2, 8);
-	usart_set_stopbits(USART2, USART_STOPBITS_1);
-	usart_set_mode(USART2, USART_MODE_TX);
-	usart_set_parity(USART2, USART_PARITY_NONE);
-	usart_set_flow_control(USART2, USART_FLOWCONTROL_NONE);
-
-	/* Finally enable the USART. */
-	usart_enable(USART2);
-}
 
 void systick_setup(int ums)
 {
@@ -69,6 +41,126 @@ void systick_setup(int ums)
 	/* this done last */
     systick_interrupt_enable();
 	
+}
+
+void clock_setup(void)
+{
+	rcc_clock_setup_hse_3v3(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_168MHZ]);
+	/* Enable GPIOD clock for LED & USARTs. */
+	rcc_periph_clock_enable(RCC_GPIOD);
+	rcc_periph_clock_enable(RCC_GPIOA);
+
+	/* Enable clocks for USART2 and dac */
+	rcc_periph_clock_enable(RCC_USART2);
+	rcc_periph_clock_enable(RCC_DAC);
+
+    rcc_clock_setup_hse_3v3(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_168MHZ]);
+
+	/* Enable GPIOD clock. */
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOG);
+    rcc_periph_clock_enable(RCC_ADC1);
+
+    rcc_periph_clock_enable(RCC_USART2);
+
+	/* And ADC*/
+	rcc_periph_clock_enable(RCC_ADC1);
+}
+
+void usart_setup(void)
+{
+	/* Setup GPIO pins for USART2 transmit. */
+	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO2);
+
+	/* Setup USART2 TX pin as alternate function. */
+	gpio_set_af(GPIOA, GPIO_AF7, GPIO2);
+
+	usart_set_baudrate(USART_CONSOLE, 115200);
+	usart_set_databits(USART_CONSOLE, 8);
+	usart_set_stopbits(USART_CONSOLE, USART_STOPBITS_1);
+	usart_set_mode(USART_CONSOLE, USART_MODE_TX);
+	usart_set_parity(USART_CONSOLE, USART_PARITY_NONE);
+	usart_set_flow_control(USART_CONSOLE, USART_FLOWCONTROL_NONE);
+
+	/* Finally enable the USART. */
+	usart_enable(USART_CONSOLE);
+}
+
+/**
+ * Use USART_CONSOLE as a console.
+ * This is a syscall for newlib
+ * @param file
+ * @param ptr
+ * @param len
+ * @return
+ */
+int _write(int file, char *ptr, int len)
+{
+	int i;
+
+	if (file == STDOUT_FILENO || file == STDERR_FILENO) {
+		for (i = 0; i < len; i++) {
+			if (ptr[i] == '\n') {
+				usart_send_blocking(USART_CONSOLE, '\r');
+			}
+			usart_send_blocking(USART_CONSOLE, ptr[i]);
+		}
+		return i;
+	}
+	errno = EIO;
+	return -1;
+}
+
+void adc_setup(void)
+{
+	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO0);
+	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO1);
+
+	adc_power_off(ADC1);
+	adc_disable_scan_mode(ADC1);
+	adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_15CYC);
+
+	adc_power_on(ADC1);
+
+}
+
+uint16_t read_adc(uint8_t channel)
+{
+	uint8_t channel_array[16];
+	channel_array[0] = channel;
+	adc_set_regular_sequence(ADC1, 1, channel_array);
+	adc_start_conversion_regular(ADC1);
+	while (!adc_eoc(ADC1));
+	uint16_t reg16 = adc_read_regular(ADC1);
+	return reg16;
+}
+
+void gpio_setup(void)
+{
+	/*	Enable GPIO clocks */
+	rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOD);
+
+	rcc_periph_clock_enable(RCC_ADC1); // enable ADC 1
+
+
+	/*	Set up ADC input */
+	gpio_mode_setup(PORT_MIC, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PIN_MIC);
+
+    gpio_mode_setup(PORT_LED, GPIO_MODE_AF, GPIO_PUPD_NONE, PIN_LED1 | PIN_LED2 | PIN_LED3 | PIN_LED4);
+	gpio_set_output_options(PORT_LED, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PIN_LED1 | PIN_LED2 | PIN_LED3 | PIN_LED4);
+	gpio_set_af(PORT_LED, GPIO_AF2, PIN_LED1 | PIN_LED2 | PIN_LED3 | PIN_LED4);
+
+
+    gpio_mode_setup(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLDOWN, GPIO3);
+
+    /* Setup GPIO pins for USART2 transmit. */
+	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO2);
+
+	/* Setup USART2 TX pin as alternate function. */
+    gpio_set_af(GPIOA, GPIO_AF7, GPIO2);	/* Setup GPIO pins for USART1 transmit. */
+	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
+
 }
 
 void tim_setup(void)
@@ -111,66 +203,6 @@ void tim_setup(void)
 	timer_enable_counter(TIM4);
 }
 
-void adc_setup(void)
-{
-	/*	Light sensor is on PA1 (ADC1) */
-	
-	int i;
-
-	/*	Enable ADC clock */
-	rcc_periph_clock_enable(RCC_ADC1);
-
-	adc_power_off(ADC1);
-	adc_disable_scan_mode(ADC1);
-	//adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC);
-    adc_power_on(ADC1); 
-    adc_start_conversion_regular(ADC1);
-}
-
-uint32_t read_adc(void)
-{
-    uint32_t val = adc_read_regular(ADC1);
-    adc_start_conversion_regular(ADC1);
-    return val;
-}
-
-void gpio_setup(void)
-{
-	/*	Enable GPIO clocks */
-	rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_GPIOD);
-
-	rcc_periph_clock_enable(RCC_ADC1); // enable ADC 1
-
-
-	/*	Set up ADC input */
-	gpio_mode_setup(PORT_MIC, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, PIN_MIC);
-
-    gpio_mode_setup(PORT_LED, GPIO_MODE_AF, GPIO_PUPD_NONE, PIN_LED1 | PIN_LED2 | PIN_LED3 | PIN_LED4);
-	gpio_set_output_options(PORT_LED, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, PIN_LED1 | PIN_LED2 | PIN_LED3 | PIN_LED4);
-	gpio_set_af(PORT_LED, GPIO_AF2, PIN_LED1 | PIN_LED2 | PIN_LED3 | PIN_LED4);
-
-
-    gpio_mode_setup(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLDOWN, GPIO3);
-
-    /* Setup GPIO pins for USART2 transmit. */
-	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO2);
-
-	/* Setup USART2 TX pin as alternate function. */
-    gpio_set_af(GPIOA, GPIO_AF7, GPIO2);	/* Setup GPIO pins for USART1 transmit. */
-	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO9);
-
-}
-
-void usart_print(char *msg)
-{
-	int len = strlen(msg);
-	int i;
-	for (i=0;i<len;i++)
-	{
-		usart_send_blocking(USART2, (uint8_t)*msg++);
-	}
-}
 
 void setLED(uint32_t led1, uint32_t led2, uint32_t led3, uint32_t led4)
 {

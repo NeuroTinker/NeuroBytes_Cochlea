@@ -18,7 +18,7 @@
 
 int _write(int file, char *ptr, int len);
 
-static void clock_setup(void)
+void clock_setup(void)
 {
 	rcc_clock_setup_hse_3v3(&rcc_hse_8mhz_3v3[RCC_CLOCK_3V3_168MHZ]);
 	/* Enable GPIOD clock for LED & USARTs. */
@@ -33,7 +33,7 @@ static void clock_setup(void)
 	rcc_periph_clock_enable(RCC_ADC1);
 }
 
-static void usart_setup(void)
+void usart_setup(void)
 {
 	/* Setup GPIO pins for USART2 transmit. */
 	gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO2);
@@ -77,7 +77,7 @@ int _write(int file, char *ptr, int len)
 	return -1;
 }
 
-static void adc_setup(void)
+void adc_setup(void)
 {
 	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO0);
 	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO1);
@@ -90,7 +90,7 @@ static void adc_setup(void)
 
 }
 
-static void dac_setup(void)
+void dac_setup(void)
 {
 	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO5);
 	dac_disable(CHANNEL_2);
@@ -99,7 +99,7 @@ static void dac_setup(void)
 	dac_set_trigger_source(DAC_CR_TSEL2_SW);
 }
 
-static uint16_t read_adc_naiive(uint8_t channel)
+uint16_t read_adc(uint8_t channel)
 {
 	uint8_t channel_array[16];
 	channel_array[0] = channel;
@@ -132,7 +132,7 @@ int main(void)
 		uint16_t val = read_adc_naiive(0);
         timedata[count].r = (double_t) val * 1.0;
         timedata[count].i = 0.0;
-        if (count++ >= 513){
+        if (count++ >= 1023){
             printf("%d\n", 111111);
             kiss_fft(buffer, timedata, freqdata);
             for (i=0; i<513; i++){
@@ -145,7 +145,7 @@ int main(void)
 		/* LED on/off */
 		gpio_toggle(LED_DISCO_GREEN_PORT, LED_DISCO_GREEN_PIN);
 
-		for (i = 0; i < 100000; i++) { /* Wait a bit. */
+		for (i = 0; i < 10000; i++) { /* Wait a bit. */
 			__asm__("NOP");
 		}
 	}

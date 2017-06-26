@@ -3,7 +3,7 @@ BINARY = main
 
 OBJS = HAL.o kiss_fft.o mini-printf.o
 
-OPENCM3_DIR = ../libopencm3
+OPENCM3_DIR = ../../libopencm3
 
 #DEVICE=STM32F407VG
 LDSCRIPT = $(OPENCM3_DIR)/lib/stm32/f4/stm32f4-discovery.ld
