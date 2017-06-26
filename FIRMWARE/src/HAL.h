@@ -1,6 +1,5 @@
 #ifndef HAL_H_
 #define HAL_H_
-
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
@@ -26,7 +25,7 @@
 
 extern volatile uint8_t main_tick;
 extern volatile uint16_t tick;
-extern volatile float timedata[NUM_SAMPLES]; // time domain samples
+extern volatile kiss_fft_cpx timedata[NUM_SAMPLES]; // time domain samples
 extern volatile uint8_t data_ready_flag;
 
 static const uint16_t gamma_lookup[1024];

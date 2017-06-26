@@ -1,4 +1,4 @@
-kiss_fftr.o: kiss_fftr.c kiss_fftr.h kiss_fft.h \
+kiss_fft.o: kiss_fft.c _kiss_fft_guts.h kiss_fft.h \
  /usr/include/newlib/stdlib.h /usr/include/newlib/machine/ieeefp.h \
  /usr/include/newlib/_ansi.h /usr/include/newlib/newlib.h \
  /usr/include/newlib/sys/config.h /usr/include/newlib/sys/features.h \
@@ -12,5 +12,5 @@ kiss_fftr.o: kiss_fftr.c kiss_fftr.h kiss_fft.h \
  /usr/include/newlib/sys/types.h /usr/include/newlib/sys/_stdint.h \
  /usr/include/newlib/machine/types.h /usr/include/newlib/sys/stdio.h \
  /usr/include/newlib/math.h /usr/include/newlib/string.h \
- /usr/include/newlib/sys/string.h _kiss_fft_guts.h \
+ /usr/include/newlib/sys/string.h \
  /usr/lib/gcc/arm-none-eabi/4.9.3/include-fixed/limits.h

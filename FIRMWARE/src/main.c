@@ -10,10 +10,9 @@
 #include "mini-printf.h"
 
 #include "kiss_fft.h"
-#include "kiss_fftr.h"
 #include "HAL.h"
 
-//#define PRINT
+#define PRINT
 
 #define BUCKET_BEGIN 0
 #define BUCKET_END 500
@@ -43,28 +42,28 @@ int main()
 
     kiss_fft_cpx freqdata[NUM_SAMPLES]; // frequency domain samples
     // initialize FFT buffer
-    kiss_fftr_cfg fft_buffer = kiss_fft_alloc(NUM_SAMPLES, 0, 0, 0);
+    kiss_fft_cfg fft_buffer = kiss_fft_alloc(NUM_SAMPLES, 0, 0, 0);
 
     uint32_t output_bucket[4];
     for(;;){
-        if (main_tick == 1){
-            main_tick = 0;
+
             if (data_ready_flag == 1){
                 // 2048 samples ready for FFT
                 //gpio_set(GPIOA, GPIO3);
+                
                 mini_snprintf(strDisp, 20, "%u", 111111);
 		        usart_print(strDisp);
                 usart_send_blocking(USART2, '\n');
-                
+                /*
                 for (i=0; i< NUM_SAMPLES; i++){
                     val = timedata[i];
                     mini_snprintf(strDisp, 20, "%u", val);
 		            usart_print(strDisp);
                     usart_send_blocking(USART2, '\n');
                 }
+                */
                 
-                
-                kiss_fftr(fft_buffer, timedata, freqdata); // FFT transform time domain -> frequency domain
+                kiss_fft(fft_buffer, timedata, freqdata); // FFT transform time domain -> frequency domain
                 for(i=0; i<5; i++){
                     bucket[i] = 0;
                 }
@@ -95,7 +94,7 @@ int main()
             }
 
             setLED(bucket[0],bucket[1],bucket[2],bucket[3]);
-        }
+        
     }
 }
 

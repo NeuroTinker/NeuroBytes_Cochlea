@@ -2,7 +2,7 @@
 
 volatile uint16_t tick = 0;
 extern volatile uint8_t main_tick = 0;
-volatile float timedata[NUM_SAMPLES];
+volatile kiss_fft_cpx timedata[NUM_SAMPLES];
 volatile uint8_t data_ready_flag=0;
 uint32_t sample_count = 0;
 
@@ -24,29 +24,18 @@ void sys_tick_handler(void)
 {
     // 100 microseconds
     uint32_t val;
-    if (tick++ >= 100){
-        main_tick = 1;
-        tick = 0;
-    }
     //gpio_toggle(GPIOA, GPIO3);
-    channel_array[0] = 1;
     if (sample_count < NUM_SAMPLES && data_ready_flag == 0){
         //gpio_set(GPIOA, GPIO3);
-        adc_set_regular_sequence(ADC1, 1, channel_array);
 	    adc_start_conversion_regular(ADC1);
 	    while (!adc_eoc(ADC1));
-        timedata[sample_count] = adc_read_regular(ADC1);
+        timedata[sample_count].r = adc_read_regular(ADC1);
         sample_count += 1;
-        /*
-        if (val > 1000){
-            timedata[sample_count].r = (uint32_t)val;
-            sample_count += 1;
-        }
-        */
         //gpio_clear(GPIOA, GPIO3);
     } else if (sample_count >= NUM_SAMPLES && data_ready_flag ==0){
         sample_count = 0;
         data_ready_flag = 1;
+        adc_power_off(ADC1);
     }
 
 }
@@ -128,9 +117,11 @@ void adc_setup(void)
 
 	adc_power_off(ADC1);
 	adc_disable_scan_mode(ADC1);
-	//adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_3CYC);
+	adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_56CYC);
+    channel_array[0]=1;
+    adc_set_regular_sequence(ADC1, 1, channel_array);
     adc_power_on(ADC1); 
-    adc_start_conversion_regular(ADC1);
+    //adc_start_conversion_regular(ADC1);
 }
 
 uint32_t read_adc(void)
