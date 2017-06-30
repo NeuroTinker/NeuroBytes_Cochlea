@@ -43,10 +43,10 @@ int main(void)
 	setLED(100,200,100, 100);
 	while (1) {
         if (data_ready_flag == 1){
-            printf("%d\n", 111111);
+            printf("\n\n");
             kiss_fft(buffer, timedata, freqdata);
             for (i=0; i<513; i++){
-                printf("%f\n", freqdata[i].r);
+                printf("%d %f \n", i, freqdata[i].r);
                 if (freqdata[i].r < 0){
                     freqdata[i].r *= -1;
                 }
@@ -60,7 +60,7 @@ int main(void)
                     bucket[bucket_i] /= 10;
                     bucket_avg[bucket_i] -= bucket_avg[bucket_i] / 2;
                     bucket_avg[bucket_i] += bucket[bucket_i] / 2;
-                    //printf("%d %f\n", bucket_i, bucket[bucket_i]);
+                    //printf("%d %f ,", bucket_i, bucket[bucket_i]);
                     bucket_i += 1;
                     if (bucket_i == 4)
                             break;
